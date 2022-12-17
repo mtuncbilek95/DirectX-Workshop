@@ -22,6 +22,17 @@ const uint16 indices[] = {
 
 Graphics::Graphics(HWND handle)
 {
+    DirectDevice = nullptr;
+    SwapChain = nullptr;
+    DirectContext = nullptr;
+    TargetBuffer = nullptr;
+
+    CreateSwapChain(handle);
+    InitializeShaders();
+}
+
+void Graphics::CreateSwapChain(HWND handle)
+{
     DXGI_SWAP_CHAIN_DESC SwapChainDesc;
 
     //  Swap chain figures out the size of the window by checking window handle
@@ -55,28 +66,23 @@ Graphics::Graphics(HWND handle)
     D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0, nullptr, 0,
                                   D3D11_SDK_VERSION, &SwapChainDesc, &SwapChain,
                                   &DirectDevice, nullptr, &DirectContext);
-    InitBuffers();
-    InitializeShaders();
 }
 
-void Graphics::EndFrame() const
-{
-    SwapChain->Present(1, 0);
-}
-
-void Graphics::InitializeViewport()
+void Graphics::CreateViewport()
 {
     D3D11_VIEWPORT Viewport;
+
     Viewport.Width = 800;
     Viewport.Height = 600;
     Viewport.MinDepth = 0;
     Viewport.MaxDepth = 1;
     Viewport.TopLeftX = 0;
     Viewport.TopLeftY = 0;
+
     DirectContext->RSSetViewports(1u, &Viewport);
 }
 
-void Graphics::InitializeInputAssembler(ComPtr<ID3D11Buffer>& VertexBuffer, ComPtr<ID3D11Buffer>& IndexBuffer, ComPtr<ID3D11InputLayout>& InputBuffer)
+void Graphics::CreateInputAssembler(ComPtr<ID3D11Buffer>& VertexBuffer, ComPtr<ID3D11Buffer>& IndexBuffer, ComPtr<ID3D11InputLayout>& InputBuffer)
 {
     const uint32 stride = sizeof(Vertex);
     const uint32 offset = 0u;
@@ -84,6 +90,30 @@ void Graphics::InitializeInputAssembler(ComPtr<ID3D11Buffer>& VertexBuffer, ComP
     DirectContext->IASetIndexBuffer(IndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
     DirectContext->IASetInputLayout(InputBuffer.Get());
     DirectContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+}
+
+void Graphics::CreateShaders(ComPtr<ID3DBlob>& Blob, ComPtr<ID3DBlob>& ErrorBlob)
+{
+    const string infoPixelShader = FileReader::GetDataFromCurrentDir("src\\HLSL", "PixelShader.hlsl");
+    const string infoVertexShader = FileReader::GetDataFromCurrentDir("src\\HLSL", "VertexShader.hlsl");
+
+    D3DCompile(infoPixelShader.c_str(), infoPixelShader.length(), nullptr, nullptr, nullptr, "main", "ps_4_0",
+               D3DCOMPILE_ENABLE_STRICTNESS, 0, &Blob, &ErrorBlob);
+
+    if (ErrorBlob.Get() != nullptr && ErrorBlob->GetBufferPointer() != nullptr)
+        printf("%s", (char*)ErrorBlob->GetBufferPointer());
+
+    DirectDevice->CreatePixelShader(Blob->GetBufferPointer(), Blob->GetBufferSize(), nullptr, &PixelShader);
+    DirectContext->PSSetShader(PixelShader.Get(), nullptr, 0u);
+
+    D3DCompile(infoVertexShader.c_str(), infoVertexShader.length(), nullptr, nullptr, nullptr, "main", "vs_4_0",
+               D3DCOMPILE_ENABLE_STRICTNESS, 0, &Blob, &ErrorBlob);
+
+    if (ErrorBlob.Get() != nullptr && ErrorBlob->GetBufferPointer() != nullptr)
+        printf("%s", (char*)ErrorBlob->GetBufferPointer());
+
+    DirectDevice->CreateVertexShader(Blob->GetBufferPointer(), Blob->GetBufferSize(), nullptr, &VertexShader);
+    DirectContext->VSSetShader(VertexShader.Get(), nullptr, 0u);
 }
 
 void Graphics::InitializeShaders()
@@ -129,35 +159,14 @@ void Graphics::InitializeShaders()
 
 #pragma region "Shaders Compilation"
 
-    ComPtr<ID3D11VertexShader> VertexShader;
-    ComPtr<ID3D11PixelShader> PixelShader;
     ComPtr<ID3DBlob> Blob;
     ComPtr<ID3DBlob> ErrorBlob;
-
-
-    const string infoPixelShader = FileReader::GetDataFromCurrentDir("src\\HLSL", "PixelShader.hlsl");
-    const string infoVertexShader = FileReader::GetDataFromCurrentDir("src\\HLSL", "VertexShader.hlsl");
-
-    D3DCompile(infoPixelShader.c_str(), infoPixelShader.length(), nullptr, nullptr, nullptr, "main", "ps_4_0",
-               D3DCOMPILE_ENABLE_STRICTNESS, 0, &Blob, &ErrorBlob);
-
-    if (ErrorBlob.Get() != nullptr && ErrorBlob->GetBufferPointer() != nullptr)
-        printf("%s", (char*)ErrorBlob->GetBufferPointer());
-
-    DirectDevice->CreatePixelShader(Blob->GetBufferPointer(), Blob->GetBufferSize(), nullptr, &PixelShader);
-    DirectContext->PSSetShader(PixelShader.Get(), nullptr, 0u);
-
-    D3DCompile(infoVertexShader.c_str(), infoVertexShader.length(), nullptr, nullptr, nullptr, "main", "vs_4_0",
-               D3DCOMPILE_ENABLE_STRICTNESS, 0, &Blob, &ErrorBlob);
-
-    if (ErrorBlob.Get() != nullptr && ErrorBlob->GetBufferPointer() != nullptr)
-        printf("%s", (char*)ErrorBlob->GetBufferPointer());
-
-    DirectDevice->CreateVertexShader(Blob->GetBufferPointer(), Blob->GetBufferSize(), nullptr, &VertexShader);
-    DirectContext->VSSetShader(VertexShader.Get(), nullptr, 0u);
+    CreateShaders(Blob, ErrorBlob);
 
 #pragma endregion
 
+#pragma region "Input Layout Buffer"
+    
     ComPtr<ID3D11InputLayout> InputBuffer;
     const D3D11_INPUT_ELEMENT_DESC InputElementDesc[] =
     {
@@ -168,8 +177,11 @@ void Graphics::InitializeShaders()
     DirectDevice->CreateInputLayout(InputElementDesc, (uint32)std::size(InputElementDesc), Blob->GetBufferPointer(),
                                     Blob->GetBufferSize(), &InputBuffer);
 
-    InitializeViewport();
-    InitializeInputAssembler(VertexBuffer, IndexBuffer, InputBuffer);
+#pragma endregion
+    
+    CreateBackBuffer();
+    CreateViewport();
+    CreateInputAssembler(VertexBuffer, IndexBuffer, InputBuffer);
 }
 
 void Graphics::Update()
@@ -179,13 +191,18 @@ void Graphics::Update()
     DirectContext->DrawIndexed(sizeof(indices) / sizeof(uint16), 0u, 0u);
 }
 
+void Graphics::EndFrame() const
+{
+    SwapChain->Present(1, 0);
+}
+
 void Graphics::ClearBuffer(const ColorRGBA<byte> bufferColor)
 {
     const float color[] = {bufferColor.Red / 255.f, bufferColor.Green / 255.f, bufferColor.Blue / 255.f, bufferColor.Alpha / 255.f};
     DirectContext->ClearRenderTargetView(TargetBuffer.Get(), color);
 }
 
-void Graphics::InitBuffers()
+void Graphics::CreateBackBuffer()
 {
     ComPtr<ID3D11Resource> BackBuffer = nullptr;
     SwapChain->GetBuffer(0, IID_PPV_ARGS(BackBuffer.GetAddressOf()));
