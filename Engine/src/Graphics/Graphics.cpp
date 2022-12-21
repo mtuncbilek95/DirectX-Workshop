@@ -7,12 +7,12 @@
 
 const Vertex vertices[] =
 {
-    {{0.0f, 0.5f}, {0, 255, 0, 0}},
+    {{0.0f, 0.5f}, {0, 255, 255, 0}},
     {{0.5f, -0.5f}, {0, 0, 255, 0}},
-    {{-0.5f, -0.5f}, {255, 0, 0, 0}},
-    {{0.0f, -1.0f}, {0, 255, 0, 0}},
+    {{-0.5f, -0.5f}, {0, 255, 0, 0}},
+    {{0.0f, -1.0f}, {0, 255, 255, 0}},
     {{-0.6f, -0.3f}, {0, 0, 255, 0}},
-    {{0.6f, -0.3f}, {255, 0, 0, 0}},
+    {{0.6f, -0.3f}, {0, 255, 0, 0}},
 };
 
 const uint16 indices[] = {
@@ -22,7 +22,7 @@ const uint16 indices[] = {
     5, 1, 0,
 };
 
-Matrix4x4<float> cbMatrix = Matrix4x4<float>::IdentityMatrix();
+Matrix4x4<float> cbMatrix = Matrix4x4<float>::RotationZ(45);
 
 Graphics::Graphics(HWND handle)
 {
