@@ -3,12 +3,14 @@
 #include <FileReader/FileReader.h>
 #include <Window/Window.h>
 
+#include <Math/Matrix4x4.h>
+
 const Vertex vertices[] =
 {
     {{0.0f, 0.5f}, {0, 255, 0, 0}},
     {{0.5f, -0.5f}, {0, 0, 255, 0}},
     {{-0.5f, -0.5f}, {255, 0, 0, 0}},
-    {{0.0f, -0.8f}, {0, 255, 0, 0}},
+    {{0.0f, -1.0f}, {0, 255, 0, 0}},
     {{-0.6f, -0.3f}, {0, 0, 255, 0}},
     {{0.6f, -0.3f}, {255, 0, 0, 0}},
 };
@@ -19,6 +21,8 @@ const uint16 indices[] = {
     2, 4, 0,
     5, 1, 0,
 };
+
+Matrix4x4<float> cbMatrix = Matrix4x4<float>::IdentityMatrix();
 
 Graphics::Graphics(HWND handle)
 {
@@ -157,6 +161,27 @@ void Graphics::InitializeShaders()
 
 #pragma endregion
 
+#pragma region "Constant Buffer"
+
+    ComPtr<ID3D11Buffer> ConstantBuffer;
+
+    D3D11_BUFFER_DESC ConstantBufferDesc = {};
+    ConstantBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    ConstantBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    ConstantBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    ConstantBufferDesc.MiscFlags = 0;
+    ConstantBufferDesc.ByteWidth = sizeof(cbMatrix);
+    ConstantBufferDesc.StructureByteStride = 0;
+
+    D3D11_SUBRESOURCE_DATA ConstantResourceData = {};
+    ConstantResourceData.pSysMem = &cbMatrix;
+
+    DirectDevice->CreateBuffer(&ConstantBufferDesc, &ConstantResourceData, &ConstantBuffer);
+    
+    DirectContext->VSSetConstantBuffers(0,1u,ConstantBuffer.GetAddressOf());
+
+#pragma endregion 
+
 #pragma region "Shaders Compilation"
 
     ComPtr<ID3DBlob> Blob;
@@ -184,7 +209,7 @@ void Graphics::InitializeShaders()
     CreateInputAssembler(VertexBuffer, IndexBuffer, InputBuffer);
 }
 
-void Graphics::Update()
+void Graphics::Update(float angle)
 {
     DirectContext->OMSetRenderTargets(1u, TargetBuffer.GetAddressOf(), nullptr);
     ClearBuffer({100u, 149u, 237u, 255u});

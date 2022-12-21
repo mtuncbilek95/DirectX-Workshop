@@ -16,7 +16,7 @@ public:
     Graphics& operator =(const Graphics&) = delete;
     ~Graphics() = default;
 
-    void Update();
+    void Update(float angle);
     void EndFrame() const;
 
     void ClearBuffer(ColorRGBA<byte> bufferColor);
@@ -38,6 +38,8 @@ private:
     
     ComPtr<ID3D11VertexShader> VertexShader;
     ComPtr<ID3D11PixelShader> PixelShader;
+
+
 };
 
 struct Vertex
