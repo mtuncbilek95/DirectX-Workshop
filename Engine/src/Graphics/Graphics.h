@@ -27,8 +27,12 @@ protected:
     void InitializeShaders();
     void CreateViewport();
     void CreateInputAssembler(ComPtr<ID3D11Buffer>& VertexBuffer, ComPtr<ID3D11Buffer>& IndexBuffer, ComPtr<ID3D11InputLayout>& InputBuffer);
-    void CreateShaders(ComPtr<ID3DBlob>& Blob, ComPtr<ID3DBlob>& ErrorBlob);
+    void CompileShaders(ComPtr<ID3DBlob>& Blob, ComPtr<ID3DBlob>& ErrorBlob);
+    void InitConstantBuffer();
 
+    void CreateBuffer();
+
+    void InitializeBuffer(ComPtr<ID3D11Buffer>& Buffer, int sizeByte, D3D11_BIND_FLAG flag, D3D11_USAGE usage, int sizeStruct, void* data);
 private:
     ComPtr<ID3D11Device> DirectDevice;
     ComPtr<IDXGISwapChain> SwapChain;
@@ -39,6 +43,9 @@ private:
     ComPtr<ID3D11VertexShader> VertexShader;
     ComPtr<ID3D11PixelShader> PixelShader;
 
+    ComPtr<ID3D11Buffer> ConstantBuffer;
+    ComPtr<ID3D11Buffer> VertexBuffer;
+    ComPtr<ID3D11Buffer> IndexBuffer;
 
 };
 

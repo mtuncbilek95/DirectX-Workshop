@@ -62,7 +62,8 @@ void Window::ProcessMessages()
 
 void Window::FrameLoop()
 {
-    DirectXGraphics->Update(45);
+    test++;
+    DirectXGraphics->Update(test);
     DirectXGraphics->EndFrame();
 }
 

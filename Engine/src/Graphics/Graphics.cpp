@@ -7,12 +7,12 @@
 
 const Vertex vertices[] =
 {
-    {{0.0f, 0.5f}, {0, 255, 255, 0}},
+    {{0.0f, 0.5f}, {0, 255, 0, 0}},
     {{0.5f, -0.5f}, {0, 0, 255, 0}},
-    {{-0.5f, -0.5f}, {0, 255, 0, 0}},
-    {{0.0f, -1.0f}, {0, 255, 255, 0}},
+    {{-0.5f, -0.5f}, {255, 0, 0, 0}},
+    {{0.0f, -1.0f}, {0, 255, 0, 0}},
     {{-0.6f, -0.3f}, {0, 0, 255, 0}},
-    {{0.6f, -0.3f}, {0, 255, 0, 0}},
+    {{0.6f, -0.3f}, {255, 0, 0, 0}},
 };
 
 const uint16 indices[] = {
@@ -22,7 +22,7 @@ const uint16 indices[] = {
     5, 1, 0,
 };
 
-Matrix4x4<float> cbMatrix = Matrix4x4<float>::RotationZ(45);
+Matrix4x4<float> cbMatrix = Matrix4x4<float>::RotationZ(0);
 
 Graphics::Graphics(HWND handle)
 {
@@ -96,7 +96,7 @@ void Graphics::CreateInputAssembler(ComPtr<ID3D11Buffer>& VertexBuffer, ComPtr<I
     DirectContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
-void Graphics::CreateShaders(ComPtr<ID3DBlob>& Blob, ComPtr<ID3DBlob>& ErrorBlob)
+void Graphics::CompileShaders(ComPtr<ID3DBlob>& Blob, ComPtr<ID3DBlob>& ErrorBlob)
 {
     const string infoPixelShader = FileReader::GetDataFromCurrentDir("src\\HLSL", "PixelShader.hlsl");
     const string infoVertexShader = FileReader::GetDataFromCurrentDir("src\\HLSL", "VertexShader.hlsl");
@@ -122,10 +122,9 @@ void Graphics::CreateShaders(ComPtr<ID3DBlob>& Blob, ComPtr<ID3DBlob>& ErrorBlob
 
 void Graphics::InitializeShaders()
 {
+    
 #pragma region "Vertex Buffer"
-
-    ComPtr<ID3D11Buffer> VertexBuffer;
-
+    
     D3D11_BUFFER_DESC VertexBufferDesc = {};
     VertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     VertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -143,8 +142,6 @@ void Graphics::InitializeShaders()
 
 #pragma region "Index Buffer"
 
-    ComPtr<ID3D11Buffer> IndexBuffer;
-
     D3D11_BUFFER_DESC IndexBufferDesc = {};
     IndexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
     IndexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -158,12 +155,9 @@ void Graphics::InitializeShaders()
 
     DirectDevice->CreateBuffer(&IndexBufferDesc, &IndexResourceData, &IndexBuffer);
 
-
 #pragma endregion
 
 #pragma region "Constant Buffer"
-
-    ComPtr<ID3D11Buffer> ConstantBuffer;
 
     D3D11_BUFFER_DESC ConstantBufferDesc = {};
     ConstantBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -177,8 +171,8 @@ void Graphics::InitializeShaders()
     ConstantResourceData.pSysMem = &cbMatrix;
 
     DirectDevice->CreateBuffer(&ConstantBufferDesc, &ConstantResourceData, &ConstantBuffer);
-    
     DirectContext->VSSetConstantBuffers(0,1u,ConstantBuffer.GetAddressOf());
+
 
 #pragma endregion 
 
@@ -186,7 +180,7 @@ void Graphics::InitializeShaders()
 
     ComPtr<ID3DBlob> Blob;
     ComPtr<ID3DBlob> ErrorBlob;
-    CreateShaders(Blob, ErrorBlob);
+    CompileShaders(Blob, ErrorBlob);
 
 #pragma endregion
 
@@ -211,6 +205,13 @@ void Graphics::InitializeShaders()
 
 void Graphics::Update(float angle)
 {
+    cbMatrix = Matrix4x4<float>::RotationZ(angle);
+    
+    D3D11_MAPPED_SUBRESOURCE deneme;
+    DirectContext->Map(ConstantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &deneme);
+    memcpy(deneme.pData, &cbMatrix, sizeof(cbMatrix));
+    DirectContext->Unmap(ConstantBuffer.Get(),0);
+    
     DirectContext->OMSetRenderTargets(1u, TargetBuffer.GetAddressOf(), nullptr);
     ClearBuffer({100u, 149u, 237u, 255u});
     DirectContext->DrawIndexed(sizeof(indices) / sizeof(uint16), 0u, 0u);

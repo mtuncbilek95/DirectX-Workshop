@@ -23,4 +23,6 @@ private:
     static LRESULT CALLBACK WindowProc(HWND handle, UINT message, WPARAM wParam,LPARAM lParam);
     
     bool closeRequest;
+
+    float test = 0;
 };
