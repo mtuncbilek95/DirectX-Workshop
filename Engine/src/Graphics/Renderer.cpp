@@ -5,16 +5,32 @@
 
 #include <Math/Matrix4x4.h>
 
+const Engine::Vertex vertices[] =
+{
+    {{-0.5f, -0.5f}, {125, 0, 255, 0}},
+    {{-0.5f, 0.5f}, {0, 255, 200, 0}},
+    {{0.5f, -0.5f}, {125, 0, 255, 0}},
+    {{0.5f, 0.5f}, {0, 255, 200, 0}},
+};
+
+const uint16 indices[] = {
+    0, 1, 2,
+    1, 3, 2,
+};
+
+Engine::Matrix4x4<float> cbMatrix = Engine::Matrix4x4<float>::RotationZ(0);
 
 Engine::Renderer::Renderer() : DevicePtr(nullptr), SwapChainPtr(nullptr), ContextPtr(nullptr), RenderTargetViewPtr(nullptr)
 {
-    D3D11_VIEWPORT Viewport;
+
+
     Viewport.Width = 800;
     Viewport.Height = 600;
     Viewport.MinDepth = 0;
     Viewport.MaxDepth = 1;
     Viewport.TopLeftX = 0;
     Viewport.TopLeftY = 0;
+
 }
 
 Engine::Renderer::~Renderer()
@@ -30,27 +46,51 @@ bool Engine::Renderer::Initialize(HWND handle)
         return false;
     if (!CreateRenderTargetView())
         return false;
-
-    //  I have an issue on InputLayout. Idk why but fuck, I will find it someday.
-    
-    /*
-     *  if (!CreateInputLayout())
-     *      return false;
-     */
-    
     if (!CreatePixelShader())
         return false;
     if (!CreateVertexShader())
         return false;
+    if (!CreateInputLayout())
+        return false;
 
+    /*
+     * I dont know what to do with the lines after 63. Someone please save me.
+     */
+    
+    ContextPtr->RSSetViewports(1u, &Viewport);
+    ContextPtr->IASetInputLayout(InputLayoutPtr.Get());
+    
+    InitBuffers();
+
+    const uint32 stride = sizeof(Vertex);
+    const uint32 offset = 0u;
+    
+    ContextPtr->IASetVertexBuffers(0u, 1u, VertexBuffer.GetAddressOf(), &stride, &offset);
+    ContextPtr->IASetIndexBuffer(IndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
+    ContextPtr->OMSetRenderTargets(1u, RenderTargetViewPtr.GetAddressOf(), nullptr);
+
+    ContextPtr->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    
     return true;
 }
 
 void Engine::Renderer::RenderFrame()
 {
-    const float color[] = {100u / 255.f, 149u / 255.f, 237u / 255.f, 255u / 255.f};
-    ContextPtr->ClearRenderTargetView(RenderTargetViewPtr.Get(), color);
+    // This is stupid but fast way to rotate an object.
+    static float i;
+    i >= 360 ? i = 0 : i++;
+    
+    cbMatrix = Matrix4x4<float>::RotationZ(i);
 
+    D3D11_MAPPED_SUBRESOURCE cbSubresource;
+    ContextPtr->Map(ConstantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &cbSubresource);
+    memcpy(cbSubresource.pData, &cbMatrix, sizeof(cbMatrix));
+    ContextPtr->Unmap(ConstantBuffer.Get(), 0);
+    
+    const float color[] = {21.2f / 255.f, 27.1f / 255.f, 31.0f / 255.f, 255.0f / 255.f};
+    ContextPtr->ClearRenderTargetView(RenderTargetViewPtr.Get(), color);
+    
+    ContextPtr->DrawIndexed(sizeof(indices) / sizeof(uint16), 0u, 0u);
     SwapChainPtr->Present(1, 0);
 }
 
@@ -92,10 +132,11 @@ bool Engine::Renderer::CreateDeviceContext(DriverTypes typeValue)
                                    DevicePtr.GetAddressOf(), nullptr, ContextPtr.GetAddressOf());
     if (FAILED(hr))
     {
-        printf("Failed to create the device");
+        printf("Failed to create the device.\n");
         return false;
     }
-
+    
+    printf("Context device has been successfuly created.\n");
     return true;
 }
 
@@ -136,7 +177,7 @@ bool Engine::Renderer::CreateSwapChain(HWND handle)
     HRESULT hr = DevicePtr.As(&dxgiDevice);
     if (FAILED(hr))
     {
-        printf("Failed to get the DXGI device");
+        printf("Failed to get the DXGI device.\n");
         return false;
     }
 
@@ -145,7 +186,7 @@ bool Engine::Renderer::CreateSwapChain(HWND handle)
     hr = dxgiDevice->GetParent(IID_PPV_ARGS(dxgiAdapter.GetAddressOf()));
     if (FAILED(hr))
     {
-        printf("Failed to get the DXGI adapter");
+        printf("Failed to get the DXGI adapter.\n");
         return false;
     }
 
@@ -154,17 +195,18 @@ bool Engine::Renderer::CreateSwapChain(HWND handle)
     hr = dxgiAdapter->GetParent(IID_PPV_ARGS(dxgiFactory.GetAddressOf()));
     if (FAILED(hr))
     {
-        printf("Failed to get the DXGI factory");
+        printf("Failed to get the DXGI factory.\n");
         return false;
     }
 
     hr = dxgiFactory->CreateSwapChain(DevicePtr.Get(), &SwapChainDesc, &SwapChainPtr);
     if (FAILED(hr))
     {
-        printf("Failed to create the swap chain");
+        printf("Failed to create the swap chain.\n");
         return false;
     }
-
+    
+    printf("Swapchain has been successfuly created.\n");
     return true;
 }
 
@@ -175,45 +217,50 @@ bool Engine::Renderer::CreateRenderTargetView()
     HRESULT hr = SwapChainPtr->GetBuffer(0, IID_PPV_ARGS(backBuffer.GetAddressOf()));
     if (FAILED(hr))
     {
-        printf("Failed to get the back buffer");
+        printf("Failed to get the back buffer.\n");
         return false;
     }
 
     hr = DevicePtr->CreateRenderTargetView(backBuffer.Get(), nullptr, &RenderTargetViewPtr);
     if (FAILED(hr))
     {
-        printf("Failed to create the render target view");
+        printf("Failed to create the render target view.\n");
         return false;
     }
-
+    
+    printf("Render Target View has been successfuly created.\n");
     return true;
 }
 
 bool Engine::Renderer::CreateInputLayout()
 {
-    ComPtr<ID3DBlob> Blob;
+    //ComPtr<ID3DBlob> Blob;
+    
     const D3D11_INPUT_ELEMENT_DESC InputElementDesc[] =
     {
         {"Position", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
         {"Color", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, 8u, D3D11_INPUT_PER_VERTEX_DATA, 0}
     };
-
-    HRESULT hr = DevicePtr->CreateInputLayout(InputElementDesc, _countof(InputElementDesc), Blob->GetBufferPointer(),
+    
+    HRESULT hr = DevicePtr->CreateInputLayout(InputElementDesc, (uint32)std::size(InputElementDesc), Blob->GetBufferPointer(),
                                               Blob->GetBufferSize(), &InputLayoutPtr);
     if (FAILED(hr))
     {
-        printf("Failed to create the input layout");
+        printf("Failed to create the input layout.\n");
         return false;
     }
+
+    printf("Input Layout has been successfuly created.\n");
     return true;
 }
 
 bool Engine::Renderer::CreatePixelShader()
 {
-    ComPtr<ID3DBlob> Blob;
+    //ComPtr<ID3DBlob> Blob;
     ComPtr<ID3DBlob> ErrorBlob;
 
     const string infoPixelShader = FileReader::GetDataFromCurrentDir("src\\HLSL", "PixelShader.hlsl");
+    
     D3DCompile(infoPixelShader.c_str(), infoPixelShader.length(), nullptr, nullptr, nullptr, "main", "ps_4_0",
                D3DCOMPILE_ENABLE_STRICTNESS, 0, &Blob, &ErrorBlob);
 
@@ -224,18 +271,20 @@ bool Engine::Renderer::CreatePixelShader()
 
     if (FAILED(hr))
     {
-        printf("Failed to create pixel shader");
+        printf("Failed to create pixel shader.\n");
         return false;
     }
-
+    
     ContextPtr->PSSetShader(PixelShader.Get(), nullptr, 0u);
-
+    
+    printf("Pixel Shader has been successfuly created.\n");
+    
     return true;
 }
 
 bool Engine::Renderer::CreateVertexShader()
 {
-    ComPtr<ID3DBlob> Blob;
+    //ComPtr<ID3DBlob> Blob;
     ComPtr<ID3DBlob> ErrorBlob;
 
     const string infoVertexShader = FileReader::GetDataFromCurrentDir("src\\HLSL", "VertexShader.hlsl");
@@ -249,30 +298,22 @@ bool Engine::Renderer::CreateVertexShader()
 
     if (FAILED(hr))
     {
-        printf("Failed to create vertex shader");
+        printf("Failed to create vertex shader.\n");
         return false;
     }
 
     ContextPtr->VSSetShader(VertexShader.Get(), nullptr, 0u);
-
+    
+    printf("Vertex Shader has been successfuly created.\n");
+    
     return true;
 }
 
-/*
- *void Engine::Renderer::CreateInputAssembler(ComPtr<ID3D11Buffer>& VertexBuffer, ComPtr<ID3D11Buffer>& IndexBuffer, ComPtr<ID3D11InputLayout>& InputBuffer)
+void Engine::Renderer::InitBuffers()
 {
-    const uint32 stride = sizeof(Vertex);
-    const uint32 offset = 0u;
-    ContextPtr->IASetVertexBuffers(0u, 1u, VertexBuffer.GetAddressOf(), &stride, &offset);
-    ContextPtr->IASetIndexBuffer(IndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
-    ContextPtr->IASetInputLayout(InputBuffer.Get());
-    ContextPtr->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-}
-
-void Engine::Renderer::InitializeShaders()
-{
+    
 #pragma region "Vertex Buffer"
-
+    
     D3D11_BUFFER_DESC VertexBufferDesc = {};
     VertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     VertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -322,41 +363,7 @@ void Engine::Renderer::InitializeShaders()
     ContextPtr->VSSetConstantBuffers(0, 1u, ConstantBuffer.GetAddressOf());
 
 #pragma endregion
-    
+
+
 }
 
-void Engine::Renderer::Update(float angle)
-{
-    cbMatrix = Matrix4x4<float>::RotationZ(angle);
-
-    D3D11_MAPPED_SUBRESOURCE deneme;
-    ContextPtr->Map(ConstantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &deneme);
-    memcpy(deneme.pData, &cbMatrix, sizeof(cbMatrix));
-    ContextPtr->Unmap(ConstantBuffer.Get(), 0);
-
-    ContextPtr->OMSetRenderTargets(1u, RenderTargetViewPtr.GetAddressOf(), nullptr);
-
-    ContextPtr->DrawIndexed(sizeof(indices) / sizeof(uint16), 0u, 0u);
-}
- *
- *
- * 
-* const Engine::Vertex vertices[] =
-{
-    {{0.0f, 0.5f}, {0, 255, 0, 0}},
-    {{0.5f, -0.5f}, {0, 0, 255, 0}},
-    {{-0.5f, -0.5f}, {255, 0, 0, 0}},
-    {{0.0f, -1.0f}, {0, 255, 0, 0}},
-    {{-0.6f, -0.3f}, {0, 0, 255, 0}},
-    {{0.6f, -0.3f}, {255, 0, 0, 0}},
-};
-
-const uint16 indices[] = {
-    0, 1, 2,
-    1, 3, 2,
-    2, 4, 0,
-    5, 1, 0,
-};
-
-Engine::Matrix4x4<float> cbMatrix = Engine::Matrix4x4<float>::RotationZ(0);
- */

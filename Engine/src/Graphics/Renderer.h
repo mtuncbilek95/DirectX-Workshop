@@ -38,6 +38,8 @@ namespace Engine
         //  Creates vertex shader.
         bool CreateVertexShader();
 
+        void InitBuffers();
+
     private:
         ComPtr<ID3D11Device> DevicePtr;
         ComPtr<IDXGISwapChain> SwapChainPtr;
@@ -48,5 +50,13 @@ namespace Engine
 
         ComPtr<ID3D11VertexShader> VertexShader;
         ComPtr<ID3D11PixelShader> PixelShader;
+
+        ComPtr<ID3DBlob> Blob;
+
+        ComPtr<ID3D11Buffer> ConstantBuffer;
+        ComPtr<ID3D11Buffer> VertexBuffer;
+        ComPtr<ID3D11Buffer> IndexBuffer;
+        
+        D3D11_VIEWPORT Viewport;
     };
 }
