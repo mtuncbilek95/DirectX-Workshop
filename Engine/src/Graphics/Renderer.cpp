@@ -258,16 +258,16 @@ bool Engine::Renderer::CreatePixelShader()
 {
     //ComPtr<ID3DBlob> Blob;
     ComPtr<ID3DBlob> ErrorBlob;
-
+    
     const string infoPixelShader = FileReader::GetDataFromCurrentDir("src\\HLSL", "PixelShader.hlsl");
     
     D3DCompile(infoPixelShader.c_str(), infoPixelShader.length(), nullptr, nullptr, nullptr, "main", "ps_4_0",
                D3DCOMPILE_ENABLE_STRICTNESS, 0, &Blob, &ErrorBlob);
-
+    
     if (ErrorBlob.Get() != nullptr && ErrorBlob->GetBufferPointer() != nullptr)
         printf("%s", (char*)ErrorBlob->GetBufferPointer());
 
-    HRESULT hr = DevicePtr->CreatePixelShader(Blob->GetBufferPointer(), Blob->GetBufferSize(), nullptr, &PixelShader);
+   HRESULT hr = DevicePtr->CreatePixelShader(Blob->GetBufferPointer(), Blob->GetBufferSize(), nullptr, &PixelShader);
 
     if (FAILED(hr))
     {

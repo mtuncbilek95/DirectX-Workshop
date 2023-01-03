@@ -1,3 +1,6 @@
+#include <iostream>
+
+#include "FileReader/FileReader.h"
 #include "Math/Matrix4x4.h"
 #include "Window/Window.h"
 

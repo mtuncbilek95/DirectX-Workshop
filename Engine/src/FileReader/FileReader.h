@@ -8,7 +8,7 @@ class FileReader
 public:
     static string GetCurrentDir()
     {
-        char *directoryBuffer = new char[MAX_PATH + 1];
+        char* directoryBuffer = new char[MAX_PATH + 1];
         GetCurrentDirectoryA(MAX_PATH, directoryBuffer);
         return (string)directoryBuffer;
     }
