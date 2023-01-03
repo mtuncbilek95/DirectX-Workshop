@@ -90,7 +90,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\Graphics\Graphics.cpp" />
+    <ClCompile Include="src\Graphics\Renderer.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Window\Window.cpp" />
   </ItemGroup>
@@ -100,7 +100,9 @@
     <ClInclude Include="src\Core\Types.h" />
     <ClInclude Include="src\FileReader\FileReader.h" />
     <ClInclude Include="src\Functions\Sort.h" />
-    <ClInclude Include="src\Graphics\Graphics.h" />
+    <ClInclude Include="src\Graphics\Data\VertexData.h" />
+    <ClInclude Include="src\Graphics\DriverTypes.h" />
+    <ClInclude Include="src\Graphics\Renderer.h" />
     <ClInclude Include="src\Math\ColorRGBA.h" />
     <ClInclude Include="src\Math\Math.h" />
     <ClInclude Include="src\Math\Matrix4x4.h" />

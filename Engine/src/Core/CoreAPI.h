@@ -8,3 +8,5 @@
 #include <d3dcompiler.h>
 
 #include <cmath>
+
+using namespace Microsoft::WRL;

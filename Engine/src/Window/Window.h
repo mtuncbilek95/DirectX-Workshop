@@ -1,7 +1,7 @@
 ﻿#pragma once
 
-#include "Core/CoreAPI.h"
-#include "Graphics/Graphics.h"
+#include <Core/CoreAPI.h>
+#include <Graphics/Renderer.h>
 
 class Window
 {
@@ -15,14 +15,12 @@ public:
 
 private:
     void ProcessMessages();
-    void FrameLoop();
     
     HINSTANCE handleInstance;
     HWND windowHandle;
-    Graphics* DirectXGraphics;
+    Engine::Renderer* DirectXGraphics;
     static LRESULT CALLBACK WindowProc(HWND handle, UINT message, WPARAM wParam,LPARAM lParam);
     
     bool closeRequest;
 
-    float test = 0;
 };
