@@ -4,9 +4,9 @@
 
 #include <Math/ColorRGBA.h>
 #include <Math/Vector2.h>
+#include <Containers/Array.h>
 
 #include <Graphics/Data/VertexData.h>
-
 #include <Graphics/DriverTypes.h>
 
 namespace Engine
@@ -18,7 +18,7 @@ namespace Engine
         Renderer(const Renderer&) = delete;
         Renderer& operator =(const Renderer&) = delete;
         ~Renderer();
-        
+
         //  Initializes create functions in the renderer.
         bool Initialize(HWND handle);
         void RenderFrame();
@@ -32,11 +32,11 @@ namespace Engine
         //  Creates render target view.
         bool CreateRenderTargetView();
         //  Creates input layout.
-        bool CreateInputLayout();
+        bool CreateInputLayout(ComPtr<ID3DBlob>& Blob);
         //  Creates pixel shader.
-        bool CreatePixelShader();
+        bool CreatePixelShader(ComPtr<ID3DBlob>& Blob);
         //  Creates vertex shader.
-        bool CreateVertexShader();
+        bool CreateVertexShader(ComPtr<ID3DBlob>& Blob);
 
         void InitBuffers();
 
@@ -51,12 +51,10 @@ namespace Engine
         ComPtr<ID3D11VertexShader> VertexShader;
         ComPtr<ID3D11PixelShader> PixelShader;
 
-        ComPtr<ID3DBlob> Blob;
+        Array<ComPtr<ID3D11Buffer>> ConstantBuffers;
+        Array<ComPtr<ID3D11Buffer>> VertexBuffers;
+        Array<ComPtr<ID3D11Buffer>> IndexBuffers;
 
-        ComPtr<ID3D11Buffer> ConstantBuffer;
-        ComPtr<ID3D11Buffer> VertexBuffer;
-        ComPtr<ID3D11Buffer> IndexBuffer;
-        
         D3D11_VIEWPORT Viewport;
     };
 }

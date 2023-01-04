@@ -22,15 +22,12 @@ Engine::Matrix4x4<float> cbMatrix = Engine::Matrix4x4<float>::RotationZ(0);
 
 Engine::Renderer::Renderer() : DevicePtr(nullptr), SwapChainPtr(nullptr), ContextPtr(nullptr), RenderTargetViewPtr(nullptr)
 {
-
-
     Viewport.Width = 800;
     Viewport.Height = 600;
     Viewport.MinDepth = 0;
     Viewport.MaxDepth = 1;
     Viewport.TopLeftX = 0;
     Viewport.TopLeftY = 0;
-
 }
 
 Engine::Renderer::~Renderer()
@@ -40,17 +37,19 @@ Engine::Renderer::~Renderer()
 
 bool Engine::Renderer::Initialize(HWND handle)
 {
+    ComPtr<ID3DBlob> Blob;
+    
     if (!CreateDeviceContext())
         return false;
     if (!CreateSwapChain(handle))
         return false;
     if (!CreateRenderTargetView())
         return false;
-    if (!CreatePixelShader())
+    if (!CreatePixelShader(Blob))
         return false;
-    if (!CreateVertexShader())
+    if (!CreateVertexShader(Blob))
         return false;
-    if (!CreateInputLayout())
+    if (!CreateInputLayout(Blob))
         return false;
 
     /*
@@ -65,8 +64,8 @@ bool Engine::Renderer::Initialize(HWND handle)
     const uint32 stride = sizeof(Vertex);
     const uint32 offset = 0u;
     
-    ContextPtr->IASetVertexBuffers(0u, 1u, VertexBuffer.GetAddressOf(), &stride, &offset);
-    ContextPtr->IASetIndexBuffer(IndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
+    ContextPtr->IASetVertexBuffers(0u, 1u, VertexBuffers[0].GetAddressOf(), &stride, &offset);
+    ContextPtr->IASetIndexBuffer(IndexBuffers[0].Get(), DXGI_FORMAT_R16_UINT, 0);
     ContextPtr->OMSetRenderTargets(1u, RenderTargetViewPtr.GetAddressOf(), nullptr);
 
     ContextPtr->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -83,9 +82,9 @@ void Engine::Renderer::RenderFrame()
     cbMatrix = Matrix4x4<float>::RotationZ(i);
 
     D3D11_MAPPED_SUBRESOURCE cbSubresource;
-    ContextPtr->Map(ConstantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &cbSubresource);
+    ContextPtr->Map(ConstantBuffers[0].Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &cbSubresource);
     memcpy(cbSubresource.pData, &cbMatrix, sizeof(cbMatrix));
-    ContextPtr->Unmap(ConstantBuffer.Get(), 0);
+    ContextPtr->Unmap(ConstantBuffers[0].Get(), 0);
     
     const float color[] = {21.2f / 255.f, 27.1f / 255.f, 31.0f / 255.f, 255.0f / 255.f};
     ContextPtr->ClearRenderTargetView(RenderTargetViewPtr.Get(), color);
@@ -232,10 +231,8 @@ bool Engine::Renderer::CreateRenderTargetView()
     return true;
 }
 
-bool Engine::Renderer::CreateInputLayout()
+bool Engine::Renderer::CreateInputLayout(ComPtr<ID3DBlob>& Blob)
 {
-    //ComPtr<ID3DBlob> Blob;
-    
     const D3D11_INPUT_ELEMENT_DESC InputElementDesc[] =
     {
         {"Position", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
@@ -254,14 +251,13 @@ bool Engine::Renderer::CreateInputLayout()
     return true;
 }
 
-bool Engine::Renderer::CreatePixelShader()
+bool Engine::Renderer::CreatePixelShader(ComPtr<ID3DBlob>& Blob)
 {
-    //ComPtr<ID3DBlob> Blob;
     ComPtr<ID3DBlob> ErrorBlob;
     
     const string infoPixelShader = FileReader::GetDataFromCurrentDir("src\\HLSL", "PixelShader.hlsl");
     
-    D3DCompile(infoPixelShader.c_str(), infoPixelShader.length(), nullptr, nullptr, nullptr, "main", "ps_4_0",
+    D3DCompile(infoPixelShader.c_str(), infoPixelShader.length(), nullptr, nullptr, nullptr, "main", "ps_5_0",
                D3DCOMPILE_ENABLE_STRICTNESS, 0, &Blob, &ErrorBlob);
     
     if (ErrorBlob.Get() != nullptr && ErrorBlob->GetBufferPointer() != nullptr)
@@ -282,13 +278,12 @@ bool Engine::Renderer::CreatePixelShader()
     return true;
 }
 
-bool Engine::Renderer::CreateVertexShader()
+bool Engine::Renderer::CreateVertexShader(ComPtr<ID3DBlob>& Blob)
 {
-    //ComPtr<ID3DBlob> Blob;
     ComPtr<ID3DBlob> ErrorBlob;
 
     const string infoVertexShader = FileReader::GetDataFromCurrentDir("src\\HLSL", "VertexShader.hlsl");
-    D3DCompile(infoVertexShader.c_str(), infoVertexShader.length(), nullptr, nullptr, nullptr, "main", "vs_4_0",
+    D3DCompile(infoVertexShader.c_str(), infoVertexShader.length(), nullptr, nullptr, nullptr, "main", "vs_5_0",
                D3DCOMPILE_ENABLE_STRICTNESS, 0, &Blob, &ErrorBlob);
 
     if (ErrorBlob.Get() != nullptr && ErrorBlob->GetBufferPointer() != nullptr)
@@ -325,7 +320,7 @@ void Engine::Renderer::InitBuffers()
     D3D11_SUBRESOURCE_DATA VertexResourceData = {};
     VertexResourceData.pSysMem = vertices;
 
-    DevicePtr->CreateBuffer(&VertexBufferDesc, &VertexResourceData, &VertexBuffer);
+    DevicePtr->CreateBuffer(&VertexBufferDesc, &VertexResourceData, &VertexBuffers[0]);
 
 #pragma endregion
 
@@ -342,7 +337,7 @@ void Engine::Renderer::InitBuffers()
     D3D11_SUBRESOURCE_DATA IndexResourceData = {};
     IndexResourceData.pSysMem = indices;
 
-    DevicePtr->CreateBuffer(&IndexBufferDesc, &IndexResourceData, &IndexBuffer);
+    DevicePtr->CreateBuffer(&IndexBufferDesc, &IndexResourceData, &IndexBuffers[0]);
 
 #pragma endregion
 
@@ -359,8 +354,8 @@ void Engine::Renderer::InitBuffers()
     D3D11_SUBRESOURCE_DATA ConstantResourceData = {};
     ConstantResourceData.pSysMem = &cbMatrix;
 
-    DevicePtr->CreateBuffer(&ConstantBufferDesc, &ConstantResourceData, &ConstantBuffer);
-    ContextPtr->VSSetConstantBuffers(0, 1u, ConstantBuffer.GetAddressOf());
+    DevicePtr->CreateBuffer(&ConstantBufferDesc, &ConstantResourceData, &ConstantBuffers[0]);
+    ContextPtr->VSSetConstantBuffers(0, 1u, ConstantBuffers[0].GetAddressOf());
 
 #pragma endregion
 
