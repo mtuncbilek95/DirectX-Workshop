@@ -9,4 +9,7 @@
 
 #include <cmath>
 
+#include <DirectXMath.h>
+
 using namespace Microsoft::WRL;
+using namespace DirectX;

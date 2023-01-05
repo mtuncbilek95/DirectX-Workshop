@@ -51,9 +51,9 @@ namespace Engine
         ComPtr<ID3D11VertexShader> VertexShader;
         ComPtr<ID3D11PixelShader> PixelShader;
 
-        Array<ComPtr<ID3D11Buffer>> ConstantBuffers;
-        Array<ComPtr<ID3D11Buffer>> VertexBuffers;
-        Array<ComPtr<ID3D11Buffer>> IndexBuffers;
+        ComPtr<ID3D11Buffer> ConstantBuffer;
+        ComPtr<ID3D11Buffer> VertexBuffer;
+        ComPtr<ID3D11Buffer> IndexBuffer;
 
         D3D11_VIEWPORT Viewport;
     };
