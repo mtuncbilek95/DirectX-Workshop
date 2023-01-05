@@ -12,6 +12,10 @@ namespace Engine
     class Model
     {
     public:
+        Model();
+        ~Model();
+        
+    private:
         Array<MeshVertex> meshVertexData;
         Material material;
     
@@ -20,4 +24,5 @@ namespace Engine
         ComPtr<ID3D11Buffer> ConstantBuffer;
         Transformation transformationMatrix;
     };
+
 }
