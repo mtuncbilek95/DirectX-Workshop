@@ -5,7 +5,9 @@
 
 #include <AssetStruct/Material/Material.h>
 #include <AssetStruct/Mesh/MeshData.h>
+
 #include <AssetStruct/Transformation/Transformation.h>
+#include <AssetStruct/Transformation/ConstantBuffer.h>
 
 namespace Engine
 {
@@ -32,6 +34,8 @@ namespace Engine
         
         Transformation transformationMatrix;
 
+        ConstantBuffer constantBuffer;
+        
         byte indices[]; 
     };
 

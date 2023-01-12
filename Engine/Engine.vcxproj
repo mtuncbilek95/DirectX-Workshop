@@ -99,6 +99,7 @@
     <ClInclude Include="src\AssetStruct\Material\Material.h" />
     <ClInclude Include="src\AssetStruct\Mesh\MeshData.h" />
     <ClInclude Include="src\AssetStruct\Model\Model.h" />
+    <ClInclude Include="src\AssetStruct\Transformation\ConstantBuffer.h" />
     <ClInclude Include="src\AssetStruct\Transformation\Transformation.h" />
     <ClInclude Include="src\Containers\Array.h" />
     <ClInclude Include="src\Core\CoreAPI.h" />

@@ -2,6 +2,7 @@
 
 Engine::Model::Model()
 {
+    constantBuffer = { XMMatrixIdentity() };
 }
 
 Engine::Model::~Model()
