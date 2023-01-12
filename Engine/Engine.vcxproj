@@ -97,7 +97,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AssetStruct\Material\Material.h" />
-    <ClInclude Include="src\AssetStruct\Mesh\MeshVertex.h" />
+    <ClInclude Include="src\AssetStruct\Mesh\MeshData.h" />
     <ClInclude Include="src\AssetStruct\Model\Model.h" />
     <ClInclude Include="src\AssetStruct\Transformation\Transformation.h" />
     <ClInclude Include="src\Containers\Array.h" />

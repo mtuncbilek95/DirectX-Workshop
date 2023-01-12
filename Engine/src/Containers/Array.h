@@ -21,9 +21,12 @@ namespace Engine
         Array();
         ~Array() = default;
 
-        void Init(unsigned initSize);
-        unsigned Size() const;
-
+        void Init(unsigned int initSize);
+        T* GetSource() { return ArrayPtr; }
+        
+        unsigned int Length() const;
+        unsigned int Size() const;
+        
         T& At(unsigned int index);
         T& operator[](const unsigned index);
 
@@ -37,39 +40,45 @@ namespace Engine
         void Swap(const unsigned& swapItemIndex1, const unsigned& swapItemIndex2);
     private:
         
-        unsigned int maximumSize = 5;
-        unsigned int currentSize;
+        unsigned int maximumLength = 5;
+        unsigned int currentLength;
         T* ArrayPtr;
 
         void ChangeSize();
         void ClearMemory();
-        unsigned MaxSize() const;
+        unsigned MaxLength() const;
     };
 
     template <typename T>
     Array<T>::Array()
     {
-        currentSize = 0;
-        ArrayPtr = new T[this->maximumSize];
+        currentLength = 0;
+        ArrayPtr = new T[this->maximumLength];
     }
 
     template <typename T>
     void Array<T>::Init(unsigned initSize)
     {
-        maximumSize = initSize;
-        ArrayPtr = new T*[this->maximumSize];
+        maximumLength = initSize;
+        ArrayPtr = new T*[this->maximumLength];
+    }
+
+    template <typename T>
+    unsigned Array<T>::Length() const
+    {
+        return currentLength;
     }
 
     template <typename T>
     unsigned Array<T>::Size() const
     {
-        return currentSize;
+        return sizeof(T) * currentLength;
     }
 
     template <typename T>
-    unsigned Array<T>::MaxSize() const
+    unsigned Array<T>::MaxLength() const
     {
-        return maximumSize;
+        return maximumLength;
     }
 
     template <typename T>
@@ -87,12 +96,12 @@ namespace Engine
     template <typename T>
     void Array<T>::Add(const T& element)
     {
-        if (currentSize == maximumSize)
+        if (currentLength == maximumLength)
         {
             ChangeSize();
         }
-        ArrayPtr[currentSize] = element;
-        currentSize++;
+        ArrayPtr[currentLength] = element;
+        currentLength++;
     }
 
     template <typename T>
@@ -104,20 +113,20 @@ namespace Engine
     template <typename T>
     void Array<T>::InsertByIndex(const T& element, unsigned index)
     {
-        if (currentSize == maximumSize)
+        if (currentLength == maximumLength)
         {
-            maximumSize *= 2;
+            maximumLength *= 2;
         }
 
-        T* Temp = new T[maximumSize];
+        T* Temp = new T[maximumLength];
 
-        for (unsigned i = 0; i < currentSize; i++)
+        for (unsigned i = 0; i < currentLength; i++)
         {
             Temp[i] = ArrayPtr[i];
         }
 
         ClearMemory();
-        ArrayPtr = new T[maximumSize];
+        ArrayPtr = new T[maximumLength];
 
         for (unsigned i = 0; i < index; i++)
         {
@@ -126,51 +135,51 @@ namespace Engine
 
         ArrayPtr[index] = element;
 
-        for (unsigned i = index; i < currentSize; i++)
+        for (unsigned i = index; i < currentLength; i++)
         {
             ArrayPtr[i + 1] = Temp[i];
         }
         delete[] Temp;
-        currentSize ++;
+        currentLength ++;
     }
 
     template <typename T>
     void Array<T>::RemoveFirst()
     {
-        for (unsigned i = 0; i < currentSize - 1; i++)
+        for (unsigned i = 0; i < currentLength - 1; i++)
         {
             ArrayPtr[i] = ArrayPtr[i + 1];
         }
-        currentSize--;
+        currentLength--;
     }
 
     template <typename T>
     void Array<T>::Remove(const unsigned order)
     {
-        if (order >= currentSize)
+        if (order >= currentLength)
         {
             throw "Out of Range";
         }
 
-        for (unsigned i = order; i < currentSize; i++)
+        for (unsigned i = order; i < currentLength; i++)
         {
             ArrayPtr[i - 1] = ArrayPtr[i];
         }
-        currentSize--;
+        currentLength--;
     }
 
     template <typename T>
     void Array<T>::RemoveAll()
     {
         ClearMemory();
-        maximumSize = 5;
-        currentSize = 0;
+        maximumLength = 5;
+        currentLength = 0;
     }
 
     template <typename T>
     void Array<T>::Swap(const unsigned& swapItemIndex1, const unsigned& swapItemIndex2)
     {
-        if (swapItemIndex1 >= currentSize || swapItemIndex1 <= currentSize)
+        if (swapItemIndex1 >= currentLength || swapItemIndex1 <= currentLength)
         {
             throw "Out of Range";
         }
@@ -184,11 +193,11 @@ namespace Engine
     void Array<T>::ChangeSize()
     {
         T* TempData = nullptr;
-        if (currentSize == maximumSize)
+        if (currentLength == maximumLength)
         {
-            TempData = new T[maximumSize];
+            TempData = new T[maximumLength];
             {
-                for (unsigned i = 0; i < currentSize; i++)
+                for (unsigned i = 0; i < currentLength; i++)
                 {
                     TempData[i] = ArrayPtr[i];
                 }
@@ -196,10 +205,10 @@ namespace Engine
 
             ClearMemory();
 
-            maximumSize = maximumSize * 2;
-            ArrayPtr = new T[maximumSize];
+            maximumLength = maximumLength * 2;
+            ArrayPtr = new T[maximumLength];
 
-            for (unsigned i = 0; i < currentSize; i++)
+            for (unsigned i = 0; i < currentLength; i++)
             {
                 ArrayPtr[i] = TempData[i];
             }

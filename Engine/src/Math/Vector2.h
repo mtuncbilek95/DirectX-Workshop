@@ -32,7 +32,7 @@ namespace Engine
         TValue Y;
 
         //	Gives the Distance from origin.
-        FORCEINLINE TValue Length();
+        FORCEINLINE TValue Length() const;
 
         //	Rates the current vector's each element in between 0 and 1.
         FORCEINLINE Vector2 Normalize();
@@ -46,7 +46,7 @@ namespace Engine
         //	2 Dimensional CrossProduct returns the Z value.
         FORCEINLINE static TValue CrossProduct(Vector2& Vec1, Vector2& Vec2);
 
-        //	Gives the Size of the Vector2 which is always equals 2.
+        //	Gives the Length of the Vector2 which is always equals 2.
         FORCEINLINE static constexpr byte Num();
 
         //	Vector2 + Vector2. Each element sums with the other vector's related element.
@@ -110,7 +110,7 @@ namespace Engine
     }
 
     template <typename TValue>
-    TValue Vector2<TValue>::Length()
+    TValue Vector2<TValue>::Length() const
     {
         return sqrt(pow(X, 2) + pow(Y, 2));
     }

@@ -1,5 +1,6 @@
 ﻿#include "Renderer.h"
 
+#include <iostream>
 #include <FileReader/FileReader.h>
 #include <Window/Window.h>
 
@@ -66,10 +67,6 @@ bool Engine::Renderer::Initialize(HWND handle)
         return false;
     if (!CreateInputLayout(Blob))
         return false;
-
-    /*
-     * I dont know what to do with the lines after 63. Someone please save me.
-     */
 
     ContextPtr->RSSetViewports(1u, &Viewport);
     ContextPtr->IASetInputLayout(InputLayoutPtr.Get());
@@ -336,7 +333,7 @@ void Engine::Renderer::InitBuffers()
     VertexBufferDesc.StructureByteStride = sizeof(Vertex);
 
     D3D11_SUBRESOURCE_DATA VertexResourceData = {};
-    VertexResourceData.pSysMem = vertices;
+    VertexResourceData.pSysMem = (void*)vertices;
 
     DevicePtr->CreateBuffer(&VertexBufferDesc, &VertexResourceData, &VertexBuffer);
 
